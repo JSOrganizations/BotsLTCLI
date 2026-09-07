@@ -105,13 +105,20 @@ def init(bot_id):
     bot_id = bot_id.strip()
     data = {
         "bot_id": bot_id,
-        "commands": {}
+        "commands": {
+            "/start": "start.py"
+        }
     }
     config.save_config(data)
     config.ensure_gitignore()
 
+    if not Path("start.py").exists():
+        with open("start.py", "w", encoding="utf-8") as f:
+            f.write("bot.sendMessage(\n    text='<b>Hello from Bots.LT CLI!</b>',\n    parse_mode='html'\n)\n")
+        click.echo(click.style("  [+] Generated starter file: start.py", fg="bright_black"))
+
     click.echo(click.style(f"[+] Initialized project for bot ID: {bot_id}", fg="green"))
-    click.echo(click.style("  botslt.json created. Add commands with: blp add /start start.py", fg="bright_black"))
+    click.echo(click.style("  botslt.json created. Add more commands with: blp add /help help.py", fg="bright_black"))
 
 
 # ─── add ─────────────────────────────────────────────────────────────────────
@@ -345,7 +352,7 @@ def logs(limit):
         click.echo(click.style(f"[-] Failed to fetch logs: {result.get('error', 'Unknown error')}", fg="red"))
         sys.exit(1)
 
-    errors = result.get("errors") or result.get("result", {}).get("errors", [])
+    errors = result.get("errors") or result.get("result", [])
 
     if not errors:
         click.echo(click.style("[+] No recent errors. Your bot is running clean!", fg="green"))
