@@ -25,9 +25,9 @@ def require_login():
         sys.exit(1)
 
 def require_config():
-    """Abort with a helpful message if botslt.json is missing."""
+    """Abort with a helpful message if blp.json is missing."""
     if not config.config_exists():
-        click.echo(click.style("[-] No botslt.json found in current directory.", fg="red"))
+        click.echo(click.style("[-] No blp.json found in current directory.", fg="red"))
         click.echo("  Run: blp init")
         sys.exit(1)
 
@@ -100,11 +100,11 @@ def logout():
 @cli.command()
 @click.option("--bot-id", "-b", prompt="Bot ID", help="Your Bots.LT Bot ID")
 def init(bot_id):
-    """Create a botslt.json config file in the current directory."""
+    """Create a blp.json config file in the current directory."""
     require_login()
 
     if config.config_exists():
-        if not click.confirm("botslt.json already exists. Overwrite?"):
+        if not click.confirm("blp.json already exists. Overwrite?"):
             click.echo("Aborted.")
             sys.exit(0)
 
@@ -124,7 +124,7 @@ def init(bot_id):
         click.echo(click.style("  [+] Generated starter file: start.py", fg="bright_black"))
 
     click.echo(click.style(f"[+] Initialized project for bot ID: {bot_id}", fg="green"))
-    click.echo(click.style("  botslt.json created. Add more commands with: blp add /help help.py", fg="bright_black"))
+    click.echo(click.style("  blp.json created. Add more commands with: blp add /help help.py", fg="bright_black"))
 
 
 # ─── add ─────────────────────────────────────────────────────────────────────
@@ -237,7 +237,7 @@ def push(files, push_all, force):
         to_push = [(cmd, f) for cmd, f in commands.items() if f in files]
         if not to_push:
             click.echo(click.style("[-] No matching commands found for the given files.", fg="red"))
-            click.echo("  Check your botslt.json mappings.")
+            click.echo("  Check your blp.json mappings.")
             sys.exit(1)
     elif push_all:
         to_push = list(commands.items())

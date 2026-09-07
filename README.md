@@ -35,7 +35,7 @@ Your project folder will look like this:
 
 ```
 my-telegram-bot/
-├── botslt.json        ← Bot ID + command mappings (safe to commit to Git)
+├── blp.json        ← Bot ID + command mappings (safe to commit to Git)
 ├── botslt.lock        ← Hash cache for change detection (Git-ignored)
 ├── start.py           ← Code for /start command
 ├── help.py            ← Code for /help command
@@ -52,7 +52,7 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 |---------|-------------|
 | `blp login` | Save your API key |
 | `blp logout` | Remove saved credentials |
-| `blp init` | Create `botslt.json` in current folder |
+| `blp init` | Create `blp.json` in current folder |
 | `blp add /cmd file.py` | Map a command to a local file |
 | `blp push` | Push changed commands to server |
 | `blp push file.py` | Push a specific file |
@@ -64,7 +64,7 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 
 ---
 
-## Example `botslt.json`
+## Example `blp.json`
 
 ```json
 {

@@ -1,11 +1,11 @@
 """
-config.py — Reads and writes botslt.json in the current project directory.
+config.py — Reads and writes blp.json in the current project directory.
 This file is safe to commit to Git — it only contains bot_id and command mappings.
 """
 import json
 from pathlib import Path
 
-CONFIG_FILE = Path("botslt.json")
+CONFIG_FILE = Path("blp.json")
 LOCK_FILE = Path("botslt.lock")
 
 
@@ -14,7 +14,7 @@ def config_exists() -> bool:
 
 
 def load_config() -> dict:
-    """Load botslt.json from current directory."""
+    """Load blp.json from current directory."""
     if not CONFIG_FILE.exists():
         return {}
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
@@ -22,7 +22,7 @@ def load_config() -> dict:
 
 
 def save_config(data: dict):
-    """Save botslt.json to current directory."""
+    """Save blp.json to current directory."""
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4)
 
