@@ -5,7 +5,13 @@ Command: blp <subcommand>
 import click
 import sys
 from pathlib import Path
+from importlib.metadata import version, PackageNotFoundError
 from . import auth, config, api
+
+try:
+    __version__ = version("botslt")
+except PackageNotFoundError:
+    __version__ = "unknown"
 
 
 # ─── Helpers ────────────────────────────────────────────────────────────────
@@ -29,7 +35,7 @@ def require_config():
 # ─── CLI Group ───────────────────────────────────────────────────────────────
 
 @click.group()
-@click.version_option("1.0.0", prog_name="blp")
+@click.version_option(__version__, prog_name="blp")
 def cli():
     """
     blp — Official CLI for Bots.LT
