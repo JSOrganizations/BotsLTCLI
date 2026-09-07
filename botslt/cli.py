@@ -97,6 +97,40 @@ def logout():
 
 # ─── init ────────────────────────────────────────────────────────────────────
 
+def generate_agent_rules():
+    """Fetch documentation from GitHub and create AGENTS.md for AI context."""
+    click.echo(click.style("  [*] Fetching AI rules from documentation...", fg="bright_black"))
+    try:
+        import requests
+        # Get tree of docs repo
+        resp = requests.get("https://api.github.com/repos/JSOrganizations/docs/git/trees/main?recursive=1", timeout=10)
+        if resp.status_code != 200:
+            click.echo(click.style("  [-] Failed to fetch docs tree from GitHub.", fg="yellow"))
+            return
+            
+        tree = resp.json().get("tree", [])
+        md_files = [item["path"] for item in tree if item["path"].endswith((".mdx", ".md")) and "logo" not in item["path"]]
+        
+        if not md_files:
+            return
+            
+        rules_content = "# Bots.LT (BLP) AI Assistant Rules\n\n"
+        rules_content += "You are an AI assistant writing code for the Bots.LT platform using BLP (Bots Limited Python).\n"
+        rules_content += "Adhere strictly to the syntax, rules, and limitations provided in the following documentation:\n\n"
+        
+        for file_path in md_files:
+            raw_url = f"https://raw.githubusercontent.com/JSOrganizations/docs/main/{file_path}"
+            file_resp = requests.get(raw_url, timeout=5)
+            if file_resp.status_code == 200:
+                rules_content += f"## Source: {file_path}\n\n{file_resp.text}\n\n---\n\n"
+                
+        with open("AGENTS.md", "w", encoding="utf-8") as f:
+            f.write(rules_content)
+            
+        click.echo(click.style("  [+] Generated AGENTS.md for AI assistance.", fg="green"))
+    except Exception as e:
+        click.echo(click.style(f"  [-] Could not generate AGENTS.md: {str(e)}", fg="yellow"))
+
 @cli.command()
 @click.option("--bot-id", "-b", prompt="Bot ID", help="Your Bots.LT Bot ID")
 def init(bot_id):
@@ -112,7 +146,10 @@ def init(bot_id):
     data = {
         "bot_id": bot_id,
         "commands": {
-            "/start": "start.py"
+            "/start": {
+                "file": "start.py",
+                "aliases": []
+            }
         }
     }
     config.save_config(data)
@@ -125,6 +162,9 @@ def init(bot_id):
 
     click.echo(click.style(f"[+] Initialized project for bot ID: {bot_id}", fg="green"))
     click.echo(click.style("  blp.json created. Add more commands with: blp add /help help.py", fg="bright_black"))
+
+    # Generate AI rules in the background/synchronously
+    generate_agent_rules()
 
 
 # ─── add ─────────────────────────────────────────────────────────────────────
@@ -143,8 +183,10 @@ def add(command_name, filename):
     require_config()
 
     cfg = config.load_config()
-    commands = cfg.setdefault("commands", {})
-    commands[command_name] = filename
+    cfg.setdefault("commands", {})[command_name] = {
+        "file": filename,
+        "aliases": []
+    }
     config.save_config(cfg)
 
     click.echo(click.style(f"[+] Mapped '{command_name}' -> '{filename}'", fg="green"))
@@ -175,8 +217,9 @@ def status():
     ok = []
     missing = []
 
-    for cmd_name, filename in commands.items():
-        if not Path(filename).exists():
+    for cmd_name, cmd_info in commands.items():
+        filename = cmd_info.get("file") if isinstance(cmd_info, dict) else cmd_info
+        if not filename or not Path(filename).exists():
             missing.append((cmd_name, filename))
         elif filename in changed_files:
             modified.append((cmd_name, filename))
@@ -234,7 +277,11 @@ def push(files, push_all, force):
 
     # If specific files given, only push those
     if files:
-        to_push = [(cmd, f) for cmd, f in commands.items() if f in files]
+        to_push = []
+        for cmd, info in commands.items():
+            f = info.get("file") if isinstance(info, dict) else info
+            if f in files:
+                to_push.append((cmd, info))
         if not to_push:
             click.echo(click.style("[-] No matching commands found for the given files.", fg="red"))
             click.echo("  Check your blp.json mappings.")
@@ -244,7 +291,11 @@ def push(files, push_all, force):
     else:
         changed = config.get_changed_files()
         changed_files = {c["file"] for c in changed}
-        to_push = [(cmd, f) for cmd, f in commands.items() if f in changed_files]
+        to_push = []
+        for cmd, info in commands.items():
+            f = info.get("file") if isinstance(info, dict) else info
+            if f in changed_files:
+                to_push.append((cmd, info))
 
     if not to_push:
         click.echo(click.style("[+] Nothing to push. Everything is up to date.", fg="green"))
@@ -255,8 +306,15 @@ def push(files, push_all, force):
     updated = 0
     failed = 0
 
-    for cmd_name, filename in to_push:
-        if not Path(filename).exists():
+    for cmd_name, cmd_info in to_push:
+        if isinstance(cmd_info, dict):
+            filename = cmd_info.get("file")
+            aliases = cmd_info.get("aliases", [])
+        else:
+            filename = cmd_info
+            aliases = []
+
+        if not filename or not Path(filename).exists():
             click.echo(f"  {click.style('!', fg='red')}  {filename:<25} -> {cmd_name} (file not found, skipped)")
             failed += 1
             continue
@@ -265,7 +323,7 @@ def push(files, push_all, force):
             code = f.read()
 
         try:
-            result = api.push_command(bot_id, cmd_name, code)
+            result = api.push_command(bot_id, cmd_name, code, aliases=aliases)
             if result.get("ok"):
                 click.echo(f"  {click.style('[+]', fg='green')}  {filename:<25} -> {cmd_name}")
                 config.update_lock_for_file(filename)
@@ -314,13 +372,21 @@ def pull(overwrite):
     for cmd in commands_data:
         cmd_name = cmd.get("command") or cmd.get("name") or cmd.get("trigger", "")
         code = cmd.get("code", "")
+        aliases = cmd.get("aliases", [])
 
         if not cmd_name:
             continue
 
-        # Generate a safe filename from the command name
-        safe_name = cmd_name.lstrip("/").replace(" ", "_").replace("*", "star").replace("@", "at") or "command"
-        filename = f"{safe_name}.py"
+        existing_info = cfg_commands.get(cmd_name)
+        if existing_info:
+            if isinstance(existing_info, str):
+                filename = existing_info
+            else:
+                filename = existing_info.get("file")
+        else:
+            # Generate a safe filename from the command name
+            safe_name = cmd_name.lstrip("/").replace(" ", "_").replace("*", "star").replace("@", "at") or "command"
+            filename = f"{safe_name}.py"
 
         if Path(filename).exists() and not overwrite:
             if not click.confirm(f"  '{filename}' already exists. Overwrite?"):
@@ -331,7 +397,10 @@ def pull(overwrite):
         with open(filename, "w", encoding="utf-8") as f:
             f.write(code)
 
-        cfg_commands[cmd_name] = filename
+        cfg_commands[cmd_name] = {
+            "file": filename,
+            "aliases": aliases
+        }
         config.update_lock_for_file(filename)
         click.echo(f"  {click.style('[+]', fg='green')}  {filename:<25} <- {cmd_name}")
         created += 1

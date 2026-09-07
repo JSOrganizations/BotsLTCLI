@@ -48,15 +48,18 @@ def get_command_code(bot_id: str, command_name: str) -> str | None:
     return None
 
 
-def push_command(bot_id: str, command_name: str, code: str) -> dict:
+def push_command(bot_id: str, command_name: str, code: str, aliases: list = None) -> dict:
     """Create or update a command on the server."""
+    if aliases is None:
+        aliases = []
+        
     import base64
     encoded = base64.b64encode(command_name.encode("utf-8")).decode("utf-8")
     # Try update first
     r = requests.put(
         _url(f"/bots/{bot_id}/commands/{encoded}"),
         headers=_headers(),
-        json={"code": code},
+        json={"code": code, "aliases": aliases},
         timeout=15
     )
     if r.status_code == 200:
@@ -65,7 +68,7 @@ def push_command(bot_id: str, command_name: str, code: str) -> dict:
     r2 = requests.post(
         _url(f"/bots/{bot_id}/commands"),
         headers=_headers(),
-        json={"command": command_name, "code": code},
+        json={"command": command_name, "code": code, "aliases": aliases},
         timeout=15
     )
     return r2.json()

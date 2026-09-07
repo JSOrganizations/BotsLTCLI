@@ -18,7 +18,15 @@ def load_config() -> dict:
     if not CONFIG_FILE.exists():
         return {}
     with open(CONFIG_FILE, "r", encoding="utf-8") as f:
-        return json.load(f)
+        data = json.load(f)
+        
+    # Convert old string format to new dict format in memory
+    commands = data.get("commands", {})
+    for cmd, cmd_info in commands.items():
+        if isinstance(cmd_info, str):
+            commands[cmd] = {"file": cmd_info, "aliases": []}
+            
+    return data
 
 
 def save_config(data: dict):
@@ -71,8 +79,9 @@ def get_changed_files() -> list[dict]:
     commands = config.get("commands", {})
 
     changed = []
-    for cmd_name, filename in commands.items():
-        if not Path(filename).exists():
+    for cmd_name, cmd_info in commands.items():
+        filename = cmd_info.get("file") if isinstance(cmd_info, dict) else cmd_info
+        if not filename or not Path(filename).exists():
             continue
         current_hash = get_file_hash(filename)
         cached_hash = cached_hashes.get(filename, "")

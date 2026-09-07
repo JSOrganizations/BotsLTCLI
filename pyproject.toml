@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "botslt"
-version = "1.1.2"
+version = "1.1.5"
 description = "Official CLI for Bots.LT — sync your bot commands like Git"
 readme = "README.md"
 requires-python = ">=3.8"
