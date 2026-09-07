@@ -64,17 +64,23 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 
 ---
 
-## Example `blp.json`
+## Example `blp.json` (with Aliases)
 
 ```json
 {
     "bot_id": "12345678",
     "commands": {
-        "/start": "start.py",
-        "/help":  "help.py",
-        "/balance": "balance.py",
-        "@":      "at_handler.py",
-        "*":      "fallback.py"
+        "/start": {
+            "file": "start.py",
+            "aliases": ["/menu"]
+        },
+        "/help": "help.py",
+        "/balance": {
+            "file": "balance.py",
+            "aliases": ["/bal", "Balance"]
+        },
+        "@": "at_handler.py",
+        "*": "fallback.py"
     }
 }
 ```
