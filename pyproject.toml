@@ -1,0 +1,33 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "botslt"
+version = "1.0.1"
+description = "Official CLI for Bots.LT — sync your bot commands like Git"
+readme = "README.md"
+requires-python = ">=3.8"
+license = { text = "MIT" }
+authors = [
+    { name = "Bots.LT Team", email = "support@bots.lt" }
+]
+keywords = ["telegram", "bot", "botslt", "cli", "sync"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Software Development :: Libraries :: Application Frameworks",
+    "Topic :: Communications :: Chat",
+]
+dependencies = [
+    "requests>=2.28.0",
+    "click>=8.1.0",
+]
+
+[project.scripts]
+blp = "botslt.cli:cli"
+
+[project.urls]
+Homepage = "https://bots.lt"
+Documentation = "https://help.bots.lt"
