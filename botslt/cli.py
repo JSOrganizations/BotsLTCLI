@@ -55,6 +55,7 @@ def cli():
       blp status         Show which files have changed
       blp bots           List all your bots
       blp commands       List all commands for a bot
+      blp view           View the code of a specific command
       blp delete         Delete a command from the server
       blp start          Start your bot
       blp stop           Stop your bot
@@ -615,6 +616,35 @@ def delete(command_name, bot_id):
     else:
         err = result.get("error") or result.get("detail", "Unknown error")
         click.echo(click.style(f"[-] Failed to delete command: {err}", fg="red"))
+
+
+# ─── view ─────────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("command_name")
+@click.argument("bot_id", required=False)
+def view(command_name, bot_id):
+    """View the code of a specific command from the server.
+    
+    If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    """
+    require_login()
+    if not bot_id:
+        if config.config_exists():
+            bot_id = config.load_config().get("bot_id")
+        else:
+            bot_id = click.prompt("Bot ID to view command from")
+            
+    bot_id = str(bot_id).strip()
+    click.echo(f"Fetching code for {click.style(command_name, fg='yellow')} from bot {click.style(bot_id, fg='cyan')}...\n")
+    
+    code = api.get_command_code(bot_id, command_name)
+    if code is not None:
+        click.echo(click.style(f"--- Code for {command_name} ---", fg="green"))
+        click.echo(code)
+        click.echo(click.style("-" * 40, fg="green"))
+    else:
+        click.echo(click.style(f"[-] Command '{command_name}' not found or failed to fetch.", fg="red"))
 
 
 if __name__ == "__main__":
