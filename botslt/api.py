@@ -78,3 +78,15 @@ def get_bot_errors(bot_id: str) -> dict:
     """Get recent error logs for a bot."""
     r = requests.get(_url(f"/bots/{bot_id}/errors"), headers=_headers(), timeout=10)
     return r.json()
+
+
+def start_bot(bot_id: str) -> dict:
+    """Start a bot."""
+    r = requests.post(_url(f"/start-bot/{bot_id}"), headers=_headers(), timeout=10)
+    return r.json()
+
+
+def stop_bot(bot_id: str) -> dict:
+    """Stop a bot."""
+    r = requests.post(_url(f"/stop-bot/{bot_id}"), headers=_headers(), timeout=10)
+    return r.json()

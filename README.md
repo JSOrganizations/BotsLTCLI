@@ -61,7 +61,33 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 | `blp status` | Show which files have changed |
 | `blp logs` | Show recent bot error logs |
 | `blp bots` | List all your bots |
+| `blp start [bot_id]` | Start a bot (ID is optional if in project) |
+| `blp stop [bot_id]` | Stop a bot (ID is optional if in project) |
 | `blp docs` | Update AI context (AGENTS.md) locally |
+
+---
+
+## Starting and Stopping Bots
+
+You can start and stop your bots directly from the CLI. The command is smart enough to know which bot to target based on your context:
+
+```bash
+# 1. If you are inside a project folder, it automatically uses the bot_id from blp.json
+blp start
+
+# 2. If you are NOT in a project folder, it will prompt you for the Bot ID:
+# Bot ID to start: 43812369
+
+# 3. You can also pass the Bot ID directly to override blp.json
+blp start 43812369
+```
+
+The exact same rules apply for stopping a bot:
+
+```bash
+blp stop
+blp stop 43812369
+```
 
 ---
 

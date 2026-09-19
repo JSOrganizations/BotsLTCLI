@@ -53,6 +53,8 @@ def cli():
       blp push           Push all changed commands to server
       blp pull           Pull all commands from server
       blp status         Show which files have changed
+      blp start          Start your bot
+      blp stop           Stop your bot
 
     Get your API Key from: https://bots.lt/dashboard -> Settings -> Security
     """
@@ -477,6 +479,54 @@ def bots():
             f"  {click.style(status, fg=status_color)}"
         )
     click.echo()
+
+
+# ─── start / stop ─────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("bot_id", required=False)
+def start(bot_id):
+    """Start your bot on the server.
+    
+    If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    """
+    require_login()
+    if not bot_id:
+        if config.config_exists():
+            bot_id = config.load_config().get("bot_id")
+        else:
+            bot_id = click.prompt("Bot ID to start")
+            
+    bot_id = str(bot_id).strip()
+    result = api.start_bot(bot_id)
+    if result.get("ok"):
+        click.echo(click.style(f"[+] Bot {bot_id} started successfully.", fg="green"))
+    else:
+        err = result.get("error") or result.get("detail", "Unknown error")
+        click.echo(click.style(f"[-] Failed to start bot: {err}", fg="red"))
+
+
+@cli.command()
+@click.argument("bot_id", required=False)
+def stop(bot_id):
+    """Stop your bot on the server.
+    
+    If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    """
+    require_login()
+    if not bot_id:
+        if config.config_exists():
+            bot_id = config.load_config().get("bot_id")
+        else:
+            bot_id = click.prompt("Bot ID to stop")
+            
+    bot_id = str(bot_id).strip()
+    result = api.stop_bot(bot_id)
+    if result.get("ok"):
+        click.echo(click.style(f"[+] Bot {bot_id} stopped successfully.", fg="green"))
+    else:
+        err = result.get("error") or result.get("detail", "Unknown error")
+        click.echo(click.style(f"[-] Failed to stop bot: {err}", fg="red"))
 
 
 if __name__ == "__main__":
