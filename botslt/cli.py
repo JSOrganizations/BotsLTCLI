@@ -473,9 +473,14 @@ def bots():
     for b in bots_list:
         status_color = "green" if b.get("is_active") else "red"
         status = "Running" if b.get("is_active") else "Stopped"
+        
+        name = b.get("name") or b.get("first_name") or ""
+        username = b.get("username", "?")
+        display_name = f"{name} (@{username})" if name else f"@{username}"
+        
         click.echo(
             f"  {click.style(str(b.get('id', '?')), fg='cyan'):<12}"
-            f"  @{str(b.get('username', '?')):<25}"
+            f"  {display_name:<40}"
             f"  {click.style(status, fg=status_color)}"
         )
     click.echo()
