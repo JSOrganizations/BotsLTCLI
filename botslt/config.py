@@ -66,17 +66,30 @@ def get_file_hash(filepath: str) -> str:
 
 def update_lock_for_file(filename: str):
     """Update the hash entry for a specific file in botslt.lock."""
+    cfg = load_config()
     lock = load_lock()
+    lock["bot_id"] = cfg.get("bot_id", "")
     lock.setdefault("files", {})[filename] = get_file_hash(filename)
     save_lock(lock)
 
 
 def get_changed_files() -> list[dict]:
     """Compare local files with botslt.lock hashes. Returns list of changed files."""
-    config = load_config()
+    config_data = load_config()
     lock = load_lock()
-    cached_hashes = lock.get("files", {})
-    commands = config.get("commands", {})
+    
+    current_bot_id = config_data.get("bot_id", "")
+    cached_bot_id = lock.get("bot_id", "")
+    
+    if current_bot_id != cached_bot_id:
+        # If bot ID changed, ignore cache and update lock's bot_id
+        cached_hashes = {}
+        lock["bot_id"] = current_bot_id
+        save_lock(lock)
+    else:
+        cached_hashes = lock.get("files", {})
+        
+    commands = config_data.get("commands", {})
 
     changed = []
     for cmd_name, cmd_info in commands.items():

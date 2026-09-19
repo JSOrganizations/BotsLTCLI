@@ -61,6 +61,7 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 | `blp status` | Show which files have changed |
 | `blp logs` | Show recent bot error logs |
 | `blp bots` | List all your bots |
+| `blp docs` | Update AI context (AGENTS.md) locally |
 
 ---
 

@@ -25,11 +25,15 @@ def require_login():
         sys.exit(1)
 
 def require_config():
-    """Abort with a helpful message if blp.json is missing."""
+    """Abort with a helpful message if blp.json is missing, or prompt for bot_id."""
     if not config.config_exists():
-        click.echo(click.style("[-] No blp.json found in current directory.", fg="red"))
-        click.echo("  Run: blp init")
-        sys.exit(1)
+        click.echo(click.style("[-] No blp.json found in current directory.", fg="yellow"))
+        bot_id = click.prompt("Please enter your Bot ID to initialize", type=str, default="")
+        if not bot_id.strip():
+            click.echo("  Run: blp init (to initialize manually)")
+            sys.exit(1)
+        config.save_config({"bot_id": bot_id.strip(), "commands": {}})
+        click.echo(click.style(f"[+] Initialized blp.json for bot {bot_id.strip()}", fg="green"))
 
 
 # ─── CLI Group ───────────────────────────────────────────────────────────────
@@ -477,3 +481,9 @@ def bots():
 
 if __name__ == "__main__":
     cli()
+
+@cli.command()
+def docs():
+    """Fetch the latest AI agent context (AGENTS.md) from the docs."""
+    generate_agent_rules()
+    click.echo(click.style("[+] Documentation rules updated successfully.", fg="green"))
