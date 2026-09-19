@@ -53,6 +53,9 @@ def cli():
       blp push           Push all changed commands to server
       blp pull           Pull all commands from server
       blp status         Show which files have changed
+      blp bots           List all your bots
+      blp commands       List all commands for a bot
+      blp delete         Delete a command from the server
       blp start          Start your bot
       blp stop           Stop your bot
 
@@ -532,6 +535,86 @@ def stop(bot_id):
     else:
         err = result.get("error") or result.get("detail", "Unknown error")
         click.echo(click.style(f"[-] Failed to stop bot: {err}", fg="red"))
+
+
+# ─── commands ─────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("bot_id", required=False)
+def commands(bot_id):
+    """List all commands for your bot on the server.
+    
+    If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    """
+    require_login()
+    if not bot_id:
+        if config.config_exists():
+            bot_id = config.load_config().get("bot_id")
+        else:
+            bot_id = click.prompt("Bot ID to fetch commands")
+            
+    bot_id = str(bot_id).strip()
+    click.echo(f"Fetching commands for bot {click.style(bot_id, fg='cyan')}...\n")
+    
+    result = api.get_all_commands(bot_id)
+    if not result.get("ok"):
+        err = result.get("error") or result.get("detail", "Unknown error")
+        click.echo(click.style(f"[-] Failed to fetch commands: {err}", fg="red"))
+        sys.exit(1)
+
+    cmds = result.get("commands") or result.get("result", {}).get("commands", [])
+
+    if not cmds:
+        click.echo(click.style(f"[+] No commands found for bot {bot_id}.", fg="yellow"))
+        return
+
+    click.echo(f"  {click.style(str(len(cmds)), fg='green')} command(s) found:\n")
+    for c in cmds:
+        cmd_name = c.get("command") or c.get("name") or c.get("trigger", "?")
+        aliases = c.get("aliases", [])
+        
+        aliases_str = f" (Aliases: {', '.join(aliases)})" if aliases else ""
+        click.echo(f"  {click.style(cmd_name, fg='cyan')}{click.style(aliases_str, fg='bright_black')}")
+        
+    click.echo()
+
+
+# ─── delete ───────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("command_name")
+@click.argument("bot_id", required=False)
+def delete(command_name, bot_id):
+    """Delete a command from the server.
+    
+    If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    """
+    require_login()
+    if not bot_id:
+        if config.config_exists():
+            bot_id = config.load_config().get("bot_id")
+        else:
+            bot_id = click.prompt("Bot ID to delete from")
+            
+    bot_id = str(bot_id).strip()
+    click.echo(f"Deleting command {click.style(command_name, fg='yellow')} from bot {click.style(bot_id, fg='cyan')}...")
+    
+    result = api.delete_command(bot_id, command_name)
+    
+    if result.get("ok"):
+        click.echo(click.style(f"[+] Command '{command_name}' deleted successfully.", fg="green"))
+        
+        # Remove from local blp.json if it exists
+        if config.config_exists():
+            cfg = config.load_config()
+            cmds = cfg.get("commands", {})
+            if command_name in cmds:
+                del cmds[command_name]
+                config.save_config(cfg)
+                click.echo(click.style(f"  [+] Removed '{command_name}' from local blp.json", fg="green"))
+    else:
+        err = result.get("error") or result.get("detail", "Unknown error")
+        click.echo(click.style(f"[-] Failed to delete command: {err}", fg="red"))
 
 
 if __name__ == "__main__":

@@ -90,3 +90,18 @@ def stop_bot(bot_id: str) -> dict:
     """Stop a bot."""
     r = requests.post(_url(f"/stop-bot/{bot_id}"), headers=_headers(), timeout=10)
     return r.json()
+
+
+def delete_command(bot_id: str, command_name: str) -> dict:
+    """Delete a command from the server."""
+    import base64
+    # The server uses base64 encoded command names in the URL
+    # Replace any padding or safe chars if required, but standard base64 encode works based on push_command
+    encoded = base64.b64encode(command_name.encode("utf-8")).decode("utf-8")
+    # BotsLT API seems to use URL-safe base64 without padding in some cases, 
+    # but based on push_command it works with standard base64.
+    # To match 'L3Rlc3RfY2FsbGJhY2s' (which has no padding '='), we can strip padding to be safe.
+    encoded = encoded.rstrip("=")
+    
+    r = requests.delete(_url(f"/bots/{bot_id}/commands/{encoded}"), headers=_headers(), timeout=15)
+    return r.json()
