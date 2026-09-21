@@ -69,6 +69,8 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 | `blp stop [bot_id]` | Stop a bot (ID is optional if in project) |
 | `blp docs` | Update AI context (AGENTS.md) locally |
 
+> 💡 **Tip:** You can run `blp <command> --help` at any time to see detailed usage, options, and examples for that specific command. (e.g., `blp rename --help`)
+
 ---
 
 ## Managing Commands from CLI

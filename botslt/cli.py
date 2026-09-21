@@ -61,6 +61,10 @@ def cli():
       blp start          Start your bot
       blp stop           Stop your bot
 
+    \b
+    💡 Tip: Run `blp <command> --help` for details and examples!
+    (e.g., `blp rename --help`)
+
     Get your API Key from: https://bots.lt/dashboard -> Settings -> Security
     """
     pass
