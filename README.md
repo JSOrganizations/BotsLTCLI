@@ -63,6 +63,7 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 | `blp bots` | List all your bots |
 | `blp commands [bot_id]`| List all commands for a bot |
 | `blp view <cmd> [bot_id]`| View the code of a specific command |
+| `blp rename <old> <new> [bot_id]`| Rename a command on the server |
 | `blp delete <cmd> [bot_id]`| Delete a command from the server |
 | `blp start [bot_id]` | Start a bot (ID is optional if in project) |
 | `blp stop [bot_id]` | Stop a bot (ID is optional if in project) |
@@ -70,26 +71,37 @@ Your **API key is stored globally** in `~/.botslt/credentials.json` — never in
 
 ---
 
-## Starting and Stopping Bots
+## Managing Commands from CLI
 
-You can start and stop your bots directly from the CLI. The command is smart enough to know which bot to target based on your context:
+You can fetch, view, rename, and delete your commands directly from the CLI. Like `start` and `stop`, these commands are smart enough to know which bot to target based on your context:
 
 ```bash
-# 1. If you are inside a project folder, it automatically uses the bot_id from blp.json
-blp start
+# 1. Inside a project folder (uses bot_id from blp.json)
+blp commands
+blp view /start
+blp rename /old_cmd /new_cmd
+blp delete /test_callback
 
-# 2. If you are NOT in a project folder, it will prompt you for the Bot ID:
-# Bot ID to start: 43812369
+# 2. Outside a project folder (prompts for Bot ID automatically)
+blp view /start
 
-# 3. You can also pass the Bot ID directly to override blp.json
-blp start 43812369
+# 3. Pass Bot ID explicitly to override
+blp rename /old_cmd /new_cmd 12345678
+blp delete /test_callback 12345678
 ```
 
-The exact same rules apply for stopping a bot:
+> **Note:** If you run `blp rename` or `blp delete` inside a project folder, the CLI will **automatically update your local `blp.json`** mapping so your next `blp push` or `blp pull` works flawlessly!
+
+---
+
+## Starting and Stopping Bots
+
+You can start and stop your bots directly from the CLI using the exact same context rules:
 
 ```bash
+blp start
 blp stop
-blp stop 43812369
+blp start 12345678
 ```
 
 ---

@@ -105,3 +105,17 @@ def delete_command(bot_id: str, command_name: str) -> dict:
     
     r = requests.delete(_url(f"/bots/{bot_id}/commands/{encoded}"), headers=_headers(), timeout=15)
     return r.json()
+
+
+def rename_command(bot_id: str, old_command: str, new_command: str) -> dict:
+    """Rename a command on the server."""
+    import base64
+    encoded = base64.b64encode(old_command.encode("utf-8")).decode("utf-8").rstrip("=")
+    
+    r = requests.patch(
+        _url(f"/bots/{bot_id}/commands/{encoded}/rename"),
+        headers=_headers(),
+        json={"command": new_command, "code": ""},
+        timeout=15
+    )
+    return r.json()

@@ -56,6 +56,7 @@ def cli():
       blp bots           List all your bots
       blp commands       List all commands for a bot
       blp view           View the code of a specific command
+      blp rename         Rename a command
       blp delete         Delete a command from the server
       blp start          Start your bot
       blp stop           Stop your bot
@@ -498,6 +499,11 @@ def start(bot_id):
     """Start your bot on the server.
     
     If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    
+    \b
+    Examples:
+      blp start
+      blp start 12345678
     """
     require_login()
     if not bot_id:
@@ -521,6 +527,11 @@ def stop(bot_id):
     """Stop your bot on the server.
     
     If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    
+    \b
+    Examples:
+      blp stop
+      blp stop 12345678
     """
     require_login()
     if not bot_id:
@@ -546,6 +557,11 @@ def commands(bot_id):
     """List all commands for your bot on the server.
     
     If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    
+    \b
+    Examples:
+      blp commands
+      blp commands 12345678
     """
     require_login()
     if not bot_id:
@@ -589,6 +605,12 @@ def delete(command_name, bot_id):
     """Delete a command from the server.
     
     If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    Note: Deleting a command will automatically remove it from your local blp.json.
+    
+    \b
+    Examples:
+      blp delete /test_callback
+      blp delete /test_callback 12345678
     """
     require_login()
     if not bot_id:
@@ -627,6 +649,11 @@ def view(command_name, bot_id):
     """View the code of a specific command from the server.
     
     If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    
+    \b
+    Examples:
+      blp view /start
+      blp view /start 12345678
     """
     require_login()
     if not bot_id:
@@ -647,11 +674,59 @@ def view(command_name, bot_id):
         click.echo(click.style(f"[-] Command '{command_name}' not found or failed to fetch.", fg="red"))
 
 
-if __name__ == "__main__":
-    cli()
+# ─── rename ───────────────────────────────────────────────────────────────────
+
+@cli.command()
+@click.argument("old_command")
+@click.argument("new_command")
+@click.argument("bot_id", required=False)
+def rename(old_command, new_command, bot_id):
+    """Rename a command on the server.
+    
+    If BOT_ID is not provided, it uses the one from blp.json or asks you.
+    Note: Renaming a command will automatically update your local blp.json.
+    
+    \b
+    Examples:
+      blp rename /old_cmd /new_cmd
+      blp rename /old_cmd /new_cmd 12345678
+    """
+    require_login()
+    if not bot_id:
+        if config.config_exists():
+            bot_id = config.load_config().get("bot_id")
+        else:
+            bot_id = click.prompt("Bot ID to rename command for")
+            
+    bot_id = str(bot_id).strip()
+    click.echo(f"Renaming command {click.style(old_command, fg='yellow')} to {click.style(new_command, fg='green')} for bot {click.style(bot_id, fg='cyan')}...")
+    
+    result = api.rename_command(bot_id, old_command, new_command)
+    
+    if result.get("ok"):
+        click.echo(click.style(f"[+] Command renamed successfully.", fg="green"))
+        
+        # Update local blp.json if it exists
+        if config.config_exists():
+            cfg = config.load_config()
+            cmds = cfg.get("commands", {})
+            if old_command in cmds:
+                cmds[new_command] = cmds.pop(old_command)
+                config.save_config(cfg)
+                click.echo(click.style(f"  [+] Updated local blp.json mapping", fg="green"))
+    else:
+        err = result.get("error") or result.get("detail", "Unknown error")
+        click.echo(click.style(f"[-] Failed to rename command: {err}", fg="red"))
+
+
+# ─── docs ─────────────────────────────────────────────────────────────────────
 
 @cli.command()
 def docs():
     """Fetch the latest AI agent context (AGENTS.md) from the docs."""
     generate_agent_rules()
     click.echo(click.style("[+] Documentation rules updated successfully.", fg="green"))
+
+
+if __name__ == "__main__":
+    cli()
