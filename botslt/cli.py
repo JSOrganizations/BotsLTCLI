@@ -73,21 +73,29 @@ def cli():
 # ─── login ───────────────────────────────────────────────────────────────────
 
 @cli.command()
-@click.option("--key", "-k", prompt=False, default=None, help="API Key (from Settings -> Security)")
-def login(key):
-    """Save your Bots.LT API key to ~/.botslt/credentials.json"""
-    if not key:
+@click.argument("key_arg", required=False)
+@click.option("--key", "-k", default=None, help="API Key (from Settings -> Security)")
+def login(key_arg, key):
+    """Save your Bots.LT API key to ~/.botslt/credentials.json
+    
+    \b
+    Examples:
+      blp login YOUR_API_KEY
+      blp login --key YOUR_API_KEY
+    """
+    api_key = key_arg or key
+    if not api_key:
         click.echo("Get your API Key from: https://bots.lt/dashboard -> Settings -> Security")
-        key = click.prompt("API Key", hide_input=True)
+        api_key = click.prompt("API Key", hide_input=True)
 
-    key = key.strip()
-    if not key:
+    api_key = api_key.strip()
+    if not api_key:
         click.echo(click.style("[-] API Key cannot be empty.", fg="red"))
         sys.exit(1)
 
     # Validate key against server
     click.echo("Verifying API key...")
-    auth.save_credentials(key)
+    auth.save_credentials(api_key)
     result = api.verify_api_key()
 
     if result.get("ok"):

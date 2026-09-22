@@ -12,7 +12,7 @@ pip install botslt
 
 ```bash
 # 1. Save your API key (from Settings → Security on bots.lt)
-blp login
+blp login YOUR_API_KEY
 
 # 2. Create a project in your bot's folder
 mkdir my-bot && cd my-bot
